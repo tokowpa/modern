@@ -591,12 +591,42 @@
                         const fbProducts = [];
                         querySnapshot.forEach((doc) => {
                             const data = doc.data();
+                            
+                            // Logika ekstraksi harga dan satuan dinamis berdasarkan struktur database Anda
+                            let extractedPrice = 0;
+                            let extractedUnit = 'pcs';
+                            let extractedBarcode = data.barcode || data.kode || data.code || '';
+
+                            // 1. Cek jika ada array 'variasi' (misal: ecer, grosir)
+                            if (Array.isArray(data.variasi) && data.variasi.length > 0) {
+                                // Cari variasi eceran atau ambil variasi pertama
+                                const ecerVar = data.variasi.find(v => v.nama && v.nama.toLowerCase().includes('ecer')) || data.variasi[0];
+                                extractedPrice = Number(ecerVar.harga || ecerVar.price || 0);
+                                extractedUnit = ecerVar.nama || 'pcs';
+                                if (ecerVar.barcode) {
+                                    extractedBarcode = ecerVar.barcode;
+                                }
+                            } else {
+                                // 2. Jika tidak ada variasi array, cek field satuan langsung (misal: slop, bal, pcs, pack)
+                                if (data.slop && Number(data.slop) > 0) {
+                                    extractedPrice = Number(data.slop);
+                                    extractedUnit = 'slop';
+                                } else if (data.bal && Number(data.bal) > 0) {
+                                    extractedPrice = Number(data.bal);
+                                    extractedUnit = 'bal';
+                                } else {
+                                    // Fallback ke field standar harga
+                                    extractedPrice = Number(data.price || data.harga || data.harga_jual || 0);
+                                    extractedUnit = data.unit || data.satuan || 'pcs';
+                                }
+                            }
+
                             fbProducts.push({
                                 id: doc.id,
-                                name: data.name || data.nama || data.nama_produk || data.title || 'Produk Tanpa Nama',
-                                price: Number(data.price || data.harga || data.harga_jual || 0),
-                                barcode: data.barcode || data.kode || data.code || '',
-                                unit: data.unit || data.satuan || 'pcs'
+                                name: data.nama || data.name || data.nama_produk || data.title || 'Produk Tanpa Nama',
+                                price: extractedPrice,
+                                barcode: extractedBarcode,
+                                unit: extractedUnit
                             });
                         });
 
