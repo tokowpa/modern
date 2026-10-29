@@ -548,17 +548,44 @@
 
                 async fetchProductsFromFirebase() {
                     try {
-                        // Priority 1: Check STRICT path according to Firebase storage guidelines
-                        const strictPath = `artifacts/${window.fbAppId}/public/data/produk`;
-                        let querySnapshot = await window.fbGetDocs(window.fbCollection(window.fbDb, 'artifacts', window.fbAppId, 'public', 'data', 'produk'));
+                        let querySnapshot = null;
+                        
+                        // Daftar kemungkinan nama koleksi yang ada di Firebase Anda
+                        const possibleCollections = [
+                            'produk', 
+                            'products', 
+                            'item', 
+                            'items', 
+                            'data_produk',
+                            `artifacts/${window.fbAppId}/public/data/produk`,
+                            `artifacts/${window.fbAppId}/public/data/products`
+                        ];
 
-                        // Fallback 2: Check root 'produk' or 'products' collections if user database uses root structure
-                        if (querySnapshot.empty) {
+                        // Coba cari di setiap koleksi hingga menemukan data
+                        for (const colName of possibleCollections) {
                             try {
-                                querySnapshot = await window.fbGetDocs(window.fbCollection(window.fbDb, 'produk'));
-                            } catch(e) {
-                                querySnapshot = await window.fbGetDocs(window.fbCollection(window.fbDb, 'products'));
+                                let snapshot;
+                                if (colName.includes('/')) {
+                                    const pathParts = colName.split('/');
+                                    snapshot = await window.fbGetDocs(window.fbCollection(window.fbDb, ...pathParts));
+                                } else {
+                                    snapshot = await window.fbGetDocs(window.fbCollection(window.fbDb, colName));
+                                }
+
+                                if (!snapshot.empty) {
+                                    querySnapshot = snapshot;
+                                    console.log(`Berhasil menemukan produk dari koleksi: '${colName}'`);
+                                    break;
+                                }
+                            } catch (e) {
+                                // Lanjut mencoba koleksi berikutnya jika error/tidak diizinkan
                             }
+                        }
+
+                        if (!querySnapshot || querySnapshot.empty) {
+                            console.warn('Tidak ditemukan data pada koleksi Firestore yang umum.');
+                            this.products = await db.products.toArray();
+                            return;
                         }
 
                         const fbProducts = [];
@@ -566,25 +593,23 @@
                             const data = doc.data();
                             fbProducts.push({
                                 id: doc.id,
-                                name: data.name || data.nama || 'Produk Tanpa Nama',
-                                price: Number(data.price || data.harga || 0),
-                                barcode: data.barcode || data.kode || '',
+                                name: data.name || data.nama || data.nama_produk || data.title || 'Produk Tanpa Nama',
+                                price: Number(data.price || data.harga || data.harga_jual || 0),
+                                barcode: data.barcode || data.kode || data.code || '',
                                 unit: data.unit || data.satuan || 'pcs'
                             });
                         });
 
                         if (fbProducts.length > 0) {
                             this.products = fbProducts;
-                            // Cache to Dexie for offline backup
+                            // Cache ke Dexie untuk cadangan
                             await db.products.clear();
                             await db.products.bulkAdd(fbProducts);
                         } else {
-                            // Fallback to local Dexie cache if Firestore collection is empty
                             this.products = await db.products.toArray();
                         }
                     } catch (err) {
                         console.error('Error fetching products from Firestore:', err);
-                        // Fallback to local IndexedDB products on network error
                         this.products = await db.products.toArray();
                     }
                 },
