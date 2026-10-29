@@ -840,10 +840,23 @@
                     receiptText += "Terima Kasih Atas Kunjungan Anda\n\n\n";
                     receiptText += "\x1D\x56\x42\x00"; // GS V Paper cut
 
-                    const encodedReceipt = encodeURIComponent(receiptText);
-                    const rawbtUrl = `intent:${encodedReceipt}#Intent;scheme=rawbt;package=ru.is_it_an.rawbtprinter;end;`;
-                    
-                    window.location.href = rawbtUrl;
+                    // Gunakan protocol scheme rawbt base64 yang paling stabil untuk printer thermal Android
+                    try {
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(receiptText);
+                        let binary = '';
+                        for (let i = 0; i < data.length; i++) {
+                            binary += String.fromCharCode(data[i]);
+                        }
+                        const base64Data = btoa(binary);
+                        
+                        // Memanggil aplikasi RawBT langsung via URL scheme
+                        window.location.href = "rawbt:base64," + base64Data;
+                    } catch (e) {
+                        // Fallback ke encoded intent standar jika browser tidak mendukung TextEncoder
+                        const encodedReceipt = encodeURIComponent(receiptText);
+                        window.location.href = `intent:${encodedReceipt}#Intent;scheme=rawbt;end;`;
+                    }
                 }
             }
         }
