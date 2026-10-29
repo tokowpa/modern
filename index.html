@@ -23,12 +23,12 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDsz5Y-7PsulS71Z_TiPWbBW3qiMkYFI1g",
-    authDomain: "wpashopgrosir-45a9d.firebaseapp.com",
-    projectId: "wpashopgrosir-45a9d",
-    storageBucket: "wpashopgrosir-45a9d.firebasestorage.app",
-    messagingSenderId: "978499317395",
-    appId: "1:978499317395:web:91fccc4e5193022f29a766"
-  };
+            authDomain: "wpashopgrosir-45a9d.firebaseapp.com",
+            projectId: "wpashopgrosir-45a9d",
+            storageBucket: "wpashopgrosir-45a9d.firebasestorage.app",
+            messagingSenderId: "978499317395",
+           appId: "1:978499317395:web:91fccc4e5193022f29a766"
+           };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -591,43 +591,54 @@
                         const fbProducts = [];
                         querySnapshot.forEach((doc) => {
                             const data = doc.data();
-                            
-                            // Logika ekstraksi harga dan satuan dinamis berdasarkan struktur database Anda
-                            let extractedPrice = 0;
-                            let extractedUnit = 'pcs';
-                            let extractedBarcode = data.barcode || data.kode || data.code || '';
+                            const baseName = data.nama || data.name || data.nama_produk || data.title || 'Produk Tanpa Nama';
+                            const docId = doc.id;
 
-                            // 1. Cek jika ada array 'variasi' (misal: ecer, grosir)
+                            // 1. Ekstrak dari Array 'variasi' (misal: Ecer, Grosir, dll)
                             if (Array.isArray(data.variasi) && data.variasi.length > 0) {
-                                // Cari variasi eceran atau ambil variasi pertama
-                                const ecerVar = data.variasi.find(v => v.nama && v.nama.toLowerCase().includes('ecer')) || data.variasi[0];
-                                extractedPrice = Number(ecerVar.harga || ecerVar.price || 0);
-                                extractedUnit = ecerVar.nama || 'pcs';
-                                if (ecerVar.barcode) {
-                                    extractedBarcode = ecerVar.barcode;
-                                }
-                            } else {
-                                // 2. Jika tidak ada variasi array, cek field satuan langsung (misal: slop, bal, pcs, pack)
-                                if (data.slop && Number(data.slop) > 0) {
-                                    extractedPrice = Number(data.slop);
-                                    extractedUnit = 'slop';
-                                } else if (data.bal && Number(data.bal) > 0) {
-                                    extractedPrice = Number(data.bal);
-                                    extractedUnit = 'bal';
-                                } else {
-                                    // Fallback ke field standar harga
-                                    extractedPrice = Number(data.price || data.harga || data.harga_jual || 0);
-                                    extractedUnit = data.unit || data.satuan || 'pcs';
-                                }
+                                data.variasi.forEach((varItem, idx) => {
+                                    if (varItem && (varItem.harga || varItem.price)) {
+                                        const unitName = varItem.nama || `Var ${idx + 1}`;
+                                        fbProducts.push({
+                                            id: `${docId}_var_${idx}`,
+                                            name: `${baseName} (${unitName})`,
+                                            price: Number(varItem.harga || varItem.price || 0),
+                                            barcode: varItem.barcode || data.barcode || '',
+                                            unit: unitName.toLowerCase()
+                                        });
+                                    }
+                                });
                             }
 
-                            fbProducts.push({
-                                id: doc.id,
-                                name: data.nama || data.name || data.nama_produk || data.title || 'Produk Tanpa Nama',
-                                price: extractedPrice,
-                                barcode: extractedBarcode,
-                                unit: extractedUnit
+                            // 2. Ekstrak dari field satuan tingkat atas (Karton, Bal, Slop, Pak, Pcs, dll)
+                            const unitFields = ['karton', 'bal', 'slop', 'pak', 'pack', 'pcs', 'eceran'];
+                            unitFields.forEach(uKey => {
+                                if (data[uKey] && Number(data[uKey]) > 0) {
+                                    // Cek agar tidak duplikat jika satuan ini sudah dimasukkan dari array variasi
+                                    const existsInVars = Array.isArray(data.variasi) && data.variasi.some(v => v.nama && v.nama.toLowerCase() === uKey);
+                                    if (!existsInVars) {
+                                        fbProducts.push({
+                                            id: `${docId}_unit_${uKey}`,
+                                            name: `${baseName} (${uKey.toUpperCase()})`,
+                                            price: Number(data[uKey]),
+                                            barcode: data.barcode || '',
+                                            unit: uKey.toLowerCase()
+                                        });
+                                    }
+                                }
                             });
+
+                            // 3. Fallback jika tidak ada variasi maupun unitFields yang terdeteksi
+                            const isAlreadyAdded = fbProducts.some(p => p.id.startsWith(docId));
+                            if (!isAlreadyAdded) {
+                                fbProducts.push({
+                                    id: docId,
+                                    name: baseName,
+                                    price: Number(data.price || data.harga || data.harga_jual || 0),
+                                    barcode: data.barcode || data.kode || '',
+                                    unit: data.unit || data.satuan || 'pcs'
+                                });
+                            }
                         });
 
                         if (fbProducts.length > 0) {
