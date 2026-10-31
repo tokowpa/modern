@@ -587,6 +587,9 @@
                 cart: [],
                 products: [],
                 transactions: [],
+                barcodeMap: new Map(), // Map cache untuk pencarian barcode super cepat O(1)
+                scanBuffer: '',
+                scanTimeout: null,
 
                 // Web Audio API Context for Notification Beeps
                 playBeep(success = true) {
@@ -658,6 +661,33 @@
                 },
 
                 init() {
+                    // Global Keyboard Listener untuk Barcode Scanner Otomatis tanpa fokus kursor
+                    window.addEventListener('keydown', (e) => {
+                        // Jangan jalankan scanner global jika user sedang mengetik di input manual, textarea, atau modal terbuka
+                        const activeEl = document.activeElement;
+                        const isInputActive = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+                        if (isInputActive || this.showHistoryModal || this.showSettingsModal || !this.isAuthenticated || this.activeTab !== 'kasir') {
+                            return;
+                        }
+
+                        // Tangkap karakter pembacaan scanner
+                        if (e.key === 'Enter') {
+                            if (this.scanBuffer.trim().length > 0) {
+                                this.productSearch = this.scanBuffer.trim();
+                                this.handleBarcodeScan();
+                                this.scanBuffer = '';
+                            }
+                        } else if (e.key.length === 1) { // Hanya karakter printable
+                            this.scanBuffer += e.key;
+
+                            // Reset buffer jika jeda pengetikan lebih dari 200ms (artinya pengetikan lambat/bukan dari scanner)
+                            clearTimeout(this.scanTimeout);
+                            this.scanTimeout = setTimeout(() => {
+                                this.scanBuffer = '';
+                            }, 200);
+                        }
+                    });
+
                     // Monitor Auth State
                     if (window.fbOnAuth && window.fbAuth) {
                         window.fbOnAuth(window.fbAuth, async (user) => {
@@ -835,9 +865,47 @@
                         } else {
                             this.products = await db.products.toArray();
                         }
+
+                        // Buat Map Indexing Barcode O(1) untuk scanner cepat tanpa lag
+                        this.barcodeMap.clear();
+                        this.products.forEach(p => {
+                            if (p.barcode) {
+                                this.barcodeMap.set(p.barcode.trim().toLowerCase(), p);
+                            }
+                        });
                     } catch (err) {
                         console.error('Error fetching products from Firestore:', err);
                         this.products = await db.products.toArray();
+                        this.barcodeMap.clear();
+                        this.products.forEach(p => {
+                            if (p.barcode) {
+                                this.barcodeMap.set(p.barcode.trim().toLowerCase(), p);
+                            }
+                        });
+                    }
+                },
+
+                handleBarcodeScan() {
+                    const query = this.productSearch.trim().toLowerCase();
+                    if (!query) return;
+
+                    // 1. Pencarian O(1) dari Map Barcode (Instan & tanpa lag)
+                    let match = this.barcodeMap.get(query);
+
+                    // 2. Jika tidak ada di Map Barcode, cari di daftar filteredProducts
+                    if (!match && this.filteredProducts.length > 0) {
+                        match = this.filteredProducts[0];
+                    }
+
+                    if (match) {
+                        this.addToCart(match);
+                        this.playBeep(true);
+                        this.productSearch = '';
+                    } else {
+                        this.playBeep(false);
+                        this.toastMessage = 'Produk / Barcode tidak ditemukan!';
+                        this.showToast = true;
+                        setTimeout(() => { this.showToast = false; }, 2500);
                     }
                 },
 
@@ -1010,7 +1078,7 @@
                     receiptText += "\x1B\x40"; // ESC @ (Initialize)
                     receiptText += "\x1B\x61\x01"; // Center align
                     receiptText += "TOKO WPA SHOP\n";
-                    receiptText += "Jl.JATISARI SENORI\n";
+                    receiptText += "Jl.jatisari senori tuban\n";
                     receiptText += "0852-3480-3820\n";
                     receiptText += divider;
                     receiptText += "\x1B\x61\x00"; // Left align
