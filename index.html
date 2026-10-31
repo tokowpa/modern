@@ -1155,72 +1155,67 @@
       }
 
       // === CETAK NOTA VIA RAWBT ===
-    function cetakRawBT(transaksi) {
-        const dataNota = buatDataESCPOS(transaksi);
+      function cetakRawBT(transaksi) {
+          const dataNota = buatDataESCPOS(transaksi);
 
-        // Convert Uint8Array ke Base64
-        let binary = '';
-        for (let i = 0; i < dataNota.length; i++) {
-            binary += String.fromCharCode(dataNota[i]);
-        }
-        const base64 = btoa(binary);
+          // Convert Uint8Array ke Base64
+          let binary = '';
+          for (let i = 0; i < dataNota.length; i++) {
+              binary += String.fromCharCode(dataNota[i]);
+          }
+          const base64 = btoa(binary);
 
-        // Intent URL Protocol untuk RawBT
-        const intentUrl = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-        window.location.href = intentUrl;
-    }
+          // Intent URL Protocol untuk RawBT
+          const intentUrl = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+          window.location.href = intentUrl;
+      }
 
-    function buatDataESCPOS(transaksi) {
-        const encoder = new TextEncoder();
-        let commands = [];
-        function add(data) {
-            if (typeof data === 'string') commands.push(...encoder.encode(data));
-            else if (Array.isArray(data)) commands.push(...data);
-        }
+      function buatDataESCPOS(transaksi) {
+          const encoder = new TextEncoder();
+          let commands = [];
+          function add(data) {
+              if (typeof data === 'string') commands.push(...encoder.encode(data));
+              else if (Array.isArray(data)) commands.push(...data);
+          }
 
-        const sizeSetting = localStorage.getItem('printerSize') || '58';
-        const lebarKertas = sizeSetting === '80' ? 48 : 32;
-        const garisPutus = "-".repeat(lebarKertas);
+          const sizeSetting = localStorage.getItem('printerSize') || '58';
+          const lebarKertas = sizeSetting === '80' ? 48 : 32;
+          const garisPutus = "-".repeat(lebarKertas);
 
-        function formatItem(item) {
-            let teksNama = `${item.nama} ${item.varian}`;
-            if (teksNama.length > lebarKertas) teksNama = teksNama.substring(0, lebarKertas);
+          function formatItem(item) {
+              let teksNama = `${item.nama} ${item.varian}`;
+              if (teksNama.length > lebarKertas) teksNama = teksNama.substring(0, lebarKertas);
 
-            const hargaQty = `${item.qty} x ${formatRupiah(item.harga)}`;
-            const total = formatRupiah(item.harga * item.qty);
+              const hargaQty = `${item.qty} x ${formatRupiah(item.harga)}`;
+              const total = formatRupiah(item.harga * item.qty);
 
-            let line1 = teksNama.padEnd(lebarKertas) + '\n';
+              let line1 = teksNama.padEnd(lebarKertas) + '\n';
 
-            const leftStr = "  " + hargaQty;
-            const rightStr = total;
-            let pad = lebarKertas - leftStr.length - rightStr.length;
-            if (pad < 1) pad = 1;
+              const leftStr = "  " + hargaQty;
+              const rightStr = total;
+              let pad = lebarKertas - leftStr.length - rightStr.length;
+              if (pad < 1) pad = 1;
 
-            let line2 = leftStr + " ".repeat(pad) + rightStr + '\n';
-            return line1 + line2;
-        }
+              let line2 = leftStr + " ".repeat(pad) + rightStr + '\n';
+              return line1 + line2;
+          }
 
-        const ESC = 0x1B; const GS = 0x1D; const NL = '\n';
-        add([ESC, 0x40]);
-        add([ESC, 0x61, 1]); add([ESC, 0x45, 1]); add([GS, 0x21, 0x11]);
-        add("Wpa Shop" + NL);
-        add([GS, 0x21, 0x0]); add([ESC, 0x45, 0]);
-        add("Jatisari Senori Tuban" + NL); add("Wa: 0852-3480-3820" + NL + NL);
-        add([ESC, 0x61, 0]);
-        add(`Tanggal  : ${transaksi.tanggal}` + NL); add(`Pelanggan: ${transaksi.namaPembeli}` + NL); add(garisPutus + NL);
-        for (const item of transaksi.detail) { add(formatItem(item)); }
-        add(garisPutus + NL);
+          const ESC = 0x1B; const GS = 0x1D; const NL = '\n';
+          add([ESC, 0x40]);
+          add([ESC, 0x61, 1]); add([ESC, 0x45, 1]); add([GS, 0x21, 0x11]);
+          add("Wpa Shop" + NL);
+          add([GS, 0x21, 0x0]); add([ESC, 0x45, 0]);
+          add("Jatisari Senori Tuban" + NL); add("Wa: 0852-3480-3820" + NL + NL);
+          add([ESC, 0x61, 0]);
+          add(`Tanggal  : ${transaksi.tanggal}` + NL); add(`Pelanggan: ${transaksi.namaPembeli}` + NL); add(garisPutus + NL);
+          for (const item of transaksi.detail) { add(formatItem(item)); }
+          add(garisPutus + NL);
 
-        add([ESC, 0x61, 2]);
-        add(`Total   : Rp ${transaksi.total}` + NL); add(`Bayar   : Rp ${transaksi.uang}` + NL); add(`Kembali : Rp ${transaksi.kembali}` + NL + NL);
+          add([ESC, 0x61, 2]);
+          add(`Total   : Rp ${transaksi.total}` + NL); add(`Bayar   : Rp ${transaksi.uang}` + NL); add(`Kembali : Rp ${transaksi.kembali}` + NL + NL);
 
-        add([ESC, 0x61, 1]); 
-        add("Terima kasih telah berbelanja!" + NL + NL);
-
-        // ==========================================
-        // === TAMBAHKAN PERINTAH QR CODE ESC/POS ===
-        // ==========================================
-        const qrData = "https://wpashop.com";
+          add([ESC, 0x61, 1]); add("Terima kasih telah berbelanja!" + NL + NL + NL);
+          const qrData = "https://wpashop.com";
         const qrDataLen = qrData.length + 3;
         const pL = qrDataLen % 256;
         const pH = Math.floor(qrDataLen / 256);
@@ -1243,11 +1238,10 @@
         
         add(NL + "Kunjungi wpashop.com" + NL + NL);
         // ==========================================
+          add([GS, 0x56, 66, 0]);
 
-        add([GS, 0x56, 66, 0]); // Potong kertas
-
-        return new Uint8Array(commands);
-    }
+          return new Uint8Array(commands);
+      }
     </script>
     <script>
       if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Error: ', err)); }); }
