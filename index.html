@@ -8,26 +8,26 @@
     <meta name="theme-color" content="#4caf50" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <style>
-      /* --- SETUP BACKGROUND & BASE STYLES --- */
+      /* --- SETUP BACKGROUND TERANG & EFEK KACA --- */
       body { 
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
         padding: 12px; 
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); 
         min-height: 100vh;
         margin: 0; 
-        color: #0f172a; /* Teks utama dibuat gelap agar kontras tinggi */
+        color: #0f172a; /* Teks utama gelap pekat agar sangat jelas */
         -webkit-font-smoothing: antialiased;
       }
       
       h1, h2 { 
         text-align: center; 
-        color: #ffffff; 
+        color: #1e293b; /* Judul dibuat gelap agar mudah dibaca di background terang */
         font-weight: 700;
         letter-spacing: -0.5px;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6); 
       }
 
-      /* --- EFEK KACA KARTU LOGIN (iOS GLASS) --- */
+      /* --- EFEK KACA KARTU LOGIN (LIGHT GLASS) --- */
       #loginContainer {
         display: flex; 
         flex-direction: column; 
@@ -37,35 +37,34 @@
         background: transparent;
       }
       .login-card {
-        background: rgba(255, 255, 255, 0.4); 
-        backdrop-filter: blur(25px) saturate(180%);
-        -webkit-backdrop-filter: blur(25px) saturate(180%);
+        background: rgba(255, 255, 255, 0.85); /* Lebih pekat agar teks jelas */
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
         padding: 30px; 
         border-radius: 24px; 
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         width: 90%; 
         max-width: 340px; 
         text-align: center;
       }
-      .login-card h2 { color: #ffffff; margin-bottom: 20px; }
+      .login-card h2 { color: #0f172a; margin-bottom: 20px; }
       .login-card input {
         width: 100%; 
         padding: 14px; 
         margin: 8px 0; 
-        border: 1px solid rgba(255, 255, 255, 0.5); 
+        border: 1px solid rgba(0, 0, 0, 0.15); 
         border-radius: 12px; 
         box-sizing: border-box; 
         font-size: 15px;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         color: #000;
         outline: none;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
       }
       .login-card input:focus {
         background: #ffffff;
         border-color: #007aff;
-        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
       }
       .login-card button {
         width: 100%; 
@@ -78,38 +77,35 @@
         border: none; 
         border-radius: 12px; 
         cursor: pointer; 
-        box-shadow: 0 4px 14px rgba(0, 122, 255, 0.4);
-        transition: transform 0.1s ease;
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
       }
-      .login-card button:active { transform: scale(0.98); }
       #appContainer { display: none; } 
       /* ------------------- */
 
       .keranjang, .riwayat, .manajemen { margin-top: 10px; }
       
-      /* --- TABEL TEMA KACA (KONTRASTING & CLEAR TEXT) --- */
+      /* --- TABEL TEMA KACA TERANG (NAMA & HARGA SANGAT JELAS) --- */
       table { 
         width: 100%; 
         border-collapse: separate; 
         border-spacing: 0;
         margin-top: 10px; 
-        background: rgba(255, 255, 255, 0.7); 
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        background: rgba(255, 255, 255, 0.9); /* Dibuat lebih padat agar teks sangat kontras */
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 16px; 
         overflow: hidden; 
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       }
       th, td { 
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06); 
         padding: 12px 14px; 
         text-align: left; 
       }
       th { 
-        background: rgba(15, 23, 42, 0.85); 
+        background: rgba(15, 23, 42, 0.9); 
         color: #ffffff; 
-        backdrop-filter: blur(10px);
         font-weight: 700;
         font-size: 14px;
         text-transform: uppercase;
@@ -118,11 +114,11 @@
       td { 
         color: #0f172a; 
         font-size: 15px;
-        font-weight: 600; /* Tebal agar nama produk & harga tampak sangat jelas */
+        font-weight: 750; /* Dipertebal agar nama produk & harga langsung mencolok */
       }
       tr:last-child td { border-bottom: none; }
-      tr:nth-child(even) { background: rgba(255, 255, 255, 0.3); }
-      tr:hover { background: rgba(255, 255, 255, 0.5); }
+      tr:nth-child(even) { background: rgba(0, 0, 0, 0.02); }
+      tr:hover { background: rgba(0, 122, 255, 0.05); }
       
       /* --- TOMBOL-TOMBOL IPHONE STYLE --- */
       button { 
@@ -135,17 +131,11 @@
         color: #fff; 
         font-weight: 600;
         font-size: 14px;
-        box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
-        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(52, 199, 89, 0.3);
       }
       button:hover { background: #2fb350; }
-      button:active { transform: scale(0.96); }
-      
-      .button-hapus { background: #ff3b30; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3); }
-      .button-hapus:hover { background: #e0352b; }
-      
-      .button-sekunder { background: #8e8e93; box-shadow: 0 2px 8px rgba(142, 142, 147, 0.3); }
-      .button-sekunder:hover { background: #7c7c80; }
+      .button-hapus { background: #ff3b30; box-shadow: 0 2px 6px rgba(255, 59, 48, 0.3); }
+      .button-sekunder { background: #8e8e93; box-shadow: 0 2px 6px rgba(142, 142, 147, 0.3); }
       
       /* --- BADGES --- */
       .badge { 
@@ -156,7 +146,6 @@
         font-weight: 700;
         margin-left: 4px; 
         display: inline-block;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       .badge-ecer { background: #34c759; } 
       .badge-karton { background: #007aff; } 
@@ -168,28 +157,27 @@
       .badge-hutang { background: #ff3b30; }
       
       .uang-rekomendasi button { 
-        background: rgba(255, 255, 255, 0.85); 
+        background: #ffffff; 
         color: #0f172a; 
-        border: 1px solid rgba(255, 255, 255, 0.6); 
-        backdrop-filter: blur(10px);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0, 0, 0, 0.15); 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       }
-      .uang-rekomendasi button:hover { background: #ffffff; }
-      .produk-varian { font-size: 13px; margin-left: 15px; color: #475569; font-weight: 500; }
+      .uang-rekomendasi button:hover { background: #f1f5f9; }
+      .produk-varian { font-size: 13px; margin-left: 15px; color: #475569; font-weight: 600; }
       
       .info-kembalian { font-size: 24px; font-weight: 800; margin-top: 8px; transition: color 0.3s ease; }
-      .info-kembalian.lunas { color: #166534; text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); }
-      .info-kembalian.kurang { color: #991b1b; text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); }
+      .info-kembalian.lunas { color: #166534; }
+      .info-kembalian.kurang { color: #991b1b; }
       
       .qty-container { display: flex; justify-content: center; align-items: center; }
       .qty-btn { width: 32px; height: 32px; padding: 0; font-size: 16px; font-weight: bold; line-height: 32px; text-align: center; border-radius: 8px; }
       
-      /* --- KOTAK RINGKASAN (GLASS KASIR MAIN PANEL) --- */
+      /* --- KOTAK RINGKASAN UTAMA --- */
       .summary-box { 
-        background: rgba(255, 255, 255, 0.65); 
-        backdrop-filter: blur(25px) saturate(180%);
-        -webkit-backdrop-filter: blur(25px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.7); 
+        background: rgba(255, 255, 255, 0.85); 
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.9); 
         border-radius: 20px; 
         padding: 16px; 
         margin-bottom: 15px; 
@@ -199,7 +187,7 @@
         justify-content: space-between; 
         align-items: flex-end; 
         gap: 12px; 
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       }
       .summary-item { flex: 1; min-width: 0; display: flex; flex-direction: column; }
       .summary-item-tombol { flex: 1.5; display: flex; flex-direction: row; gap: 8px; align-self: flex-end; }
@@ -208,10 +196,9 @@
       .summary-label { 
         font-size: 13px; 
         font-weight: 700; 
-        color: #1e293b; 
+        color: #334155; 
         margin-bottom: 6px; 
         text-transform: uppercase;
-        letter-spacing: 0.5px;
       }
       
       .summary-item input[type="text"], 
@@ -225,9 +212,8 @@
         font-weight: 600;
         border-radius: 10px; 
         border: 1px solid rgba(0, 0, 0, 0.15); 
-        background: rgba(255, 255, 255, 0.9); 
+        background: #ffffff; 
         color: #000;
-        outline: none;
       }
       
       .total { 
@@ -238,9 +224,7 @@
         text-align: left; 
         padding-top: 3px; 
         color: #0f172a; 
-        letter-spacing: -1px;
       }
-      .info-kembalian { font-size: 20px; font-weight: 800; margin-top: 0; padding-top: 8px; }
       
       input[type="number"].qty-input { 
         width: 45px; 
@@ -261,32 +245,27 @@
       
       /* --- NOTIFIKASI --- */
       .notif-container { position: fixed; top: 16px; right: 16px; z-index: 10001; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: calc(100% - 32px); }
-      .notif { pointer-events: auto; min-width: 220px; max-width: 420px; padding: 14px 18px; border-radius: 14px; color: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-8px); animation: notifIn 250ms ease forwards; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.4); }
-      .notif .icon { font-weight: 700; width: 20px; text-align: center; }
-      .notif.success { background: rgba(52, 199, 89, 0.85); backdrop-filter: blur(12px); }
-      .notif.error { background: rgba(255, 59, 48, 0.85); backdrop-filter: blur(12px); }
-      .notif.info { background: rgba(0, 122, 255, 0.85); backdrop-filter: blur(12px); }
-      .notif.fade-out { animation: notifOut 350ms ease forwards; }
-      @keyframes notifIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-      @keyframes notifOut { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-8px) scale(0.98); } }
+      .notif { pointer-events: auto; min-width: 220px; max-width: 420px; padding: 14px 18px; border-radius: 14px; color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+      .notif.success { background: rgba(52, 199, 89, 0.95); }
+      .notif.error { background: rgba(255, 59, 48, 0.95); }
+      .notif.info { background: rgba(0, 122, 255, 0.95); }
       
-      /* --- MODAL / POPUP (iOS SHEET) --- */
-      .modal, .popup-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
+      /* --- MODAL / POPUP --- */
+      .modal, .popup-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.3); backdrop-filter: blur(6px); }
       .modal-content, .popup-content { 
-        background-color: rgba(255, 255, 255, 0.85); 
-        backdrop-filter: blur(30px) saturate(180%);
-        -webkit-backdrop-filter: blur(30px) saturate(180%);
+        background-color: rgba(255, 255, 255, 0.95); 
+        backdrop-filter: blur(30px);
         margin: 5% auto; 
         padding: 24px; 
-        border: 1px solid rgba(255, 255, 255, 0.7); 
+        border: 1px solid rgba(255, 255, 255, 1); 
         width: 85%; 
         max-width: 700px; 
         border-radius: 24px; 
-        box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         color: #0f172a;
       }
-      .modal-close { color: #8e8e93; float: right; font-size: 24px; font-weight: bold; cursor: pointer; transition: color 0.2s; }
-      .modal-close:hover, .modal-close:focus { color: #000; }
+      .modal-close { color: #8e8e93; float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
+      .modal-close:hover { color: #000; }
       .popup-content { max-height: 80vh; overflow-y: auto; }
       #inputPopupCari { 
         margin-bottom: 15px; 
@@ -301,10 +280,9 @@
       }
       .form-group { margin-bottom: 12px; }
       .form-group label { display: block; margin-bottom: 5px; font-weight: 700; color: #1e293b; }
-      .varian-item { border: 1px solid rgba(0, 0, 0, 0.1); padding: 12px; margin-top: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.5); }
+      .varian-item { border: 1px solid rgba(0, 0, 0, 0.1); padding: 12px; margin-top: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.8); }
       .hidden { display: none; }
       .pagination-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; }
-      .pagination-container button:disabled { background: rgba(0,0,0,0.1); color: #a1a1aa; cursor: not-allowed; box-shadow: none; }
 </style>
   </head>
   <body>
@@ -1177,70 +1155,99 @@
       }
 
       // === CETAK NOTA VIA RAWBT ===
-      function cetakRawBT(transaksi) {
-          const dataNota = buatDataESCPOS(transaksi);
+    function cetakRawBT(transaksi) {
+        const dataNota = buatDataESCPOS(transaksi);
 
-          // Convert Uint8Array ke Base64
-          let binary = '';
-          for (let i = 0; i < dataNota.length; i++) {
-              binary += String.fromCharCode(dataNota[i]);
-          }
-          const base64 = btoa(binary);
+        // Convert Uint8Array ke Base64
+        let binary = '';
+        for (let i = 0; i < dataNota.length; i++) {
+            binary += String.fromCharCode(dataNota[i]);
+        }
+        const base64 = btoa(binary);
 
-          // Intent URL Protocol untuk RawBT
-          const intentUrl = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-          window.location.href = intentUrl;
-      }
+        // Intent URL Protocol untuk RawBT
+        const intentUrl = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+        window.location.href = intentUrl;
+    }
 
-      function buatDataESCPOS(transaksi) {
-          const encoder = new TextEncoder();
-          let commands = [];
-          function add(data) {
-              if (typeof data === 'string') commands.push(...encoder.encode(data));
-              else if (Array.isArray(data)) commands.push(...data);
-          }
+    function buatDataESCPOS(transaksi) {
+        const encoder = new TextEncoder();
+        let commands = [];
+        function add(data) {
+            if (typeof data === 'string') commands.push(...encoder.encode(data));
+            else if (Array.isArray(data)) commands.push(...data);
+        }
 
-          const sizeSetting = localStorage.getItem('printerSize') || '58';
-          const lebarKertas = sizeSetting === '80' ? 48 : 32;
-          const garisPutus = "-".repeat(lebarKertas);
+        const sizeSetting = localStorage.getItem('printerSize') || '58';
+        const lebarKertas = sizeSetting === '80' ? 48 : 32;
+        const garisPutus = "-".repeat(lebarKertas);
 
-          function formatItem(item) {
-              let teksNama = `${item.nama} ${item.varian}`;
-              if (teksNama.length > lebarKertas) teksNama = teksNama.substring(0, lebarKertas);
+        function formatItem(item) {
+            let teksNama = `${item.nama} ${item.varian}`;
+            if (teksNama.length > lebarKertas) teksNama = teksNama.substring(0, lebarKertas);
 
-              const hargaQty = `${item.qty} x ${formatRupiah(item.harga)}`;
-              const total = formatRupiah(item.harga * item.qty);
+            const hargaQty = `${item.qty} x ${formatRupiah(item.harga)}`;
+            const total = formatRupiah(item.harga * item.qty);
 
-              let line1 = teksNama.padEnd(lebarKertas) + '\n';
+            let line1 = teksNama.padEnd(lebarKertas) + '\n';
 
-              const leftStr = "  " + hargaQty;
-              const rightStr = total;
-              let pad = lebarKertas - leftStr.length - rightStr.length;
-              if (pad < 1) pad = 1;
+            const leftStr = "  " + hargaQty;
+            const rightStr = total;
+            let pad = lebarKertas - leftStr.length - rightStr.length;
+            if (pad < 1) pad = 1;
 
-              let line2 = leftStr + " ".repeat(pad) + rightStr + '\n';
-              return line1 + line2;
-          }
+            let line2 = leftStr + " ".repeat(pad) + rightStr + '\n';
+            return line1 + line2;
+        }
 
-          const ESC = 0x1B; const GS = 0x1D; const NL = '\n';
-          add([ESC, 0x40]);
-          add([ESC, 0x61, 1]); add([ESC, 0x45, 1]); add([GS, 0x21, 0x11]);
-          add("Wpa Shop" + NL);
-          add([GS, 0x21, 0x0]); add([ESC, 0x45, 0]);
-          add("Jatisari Senori Tuban" + NL); add("Wa: 0852-3480-3820" + NL + NL);
-          add([ESC, 0x61, 0]);
-          add(`Tanggal  : ${transaksi.tanggal}` + NL); add(`Pelanggan: ${transaksi.namaPembeli}` + NL); add(garisPutus + NL);
-          for (const item of transaksi.detail) { add(formatItem(item)); }
-          add(garisPutus + NL);
+        const ESC = 0x1B; const GS = 0x1D; const NL = '\n';
+        add([ESC, 0x40]);
+        add([ESC, 0x61, 1]); add([ESC, 0x45, 1]); add([GS, 0x21, 0x11]);
+        add("Wpa Shop" + NL);
+        add([GS, 0x21, 0x0]); add([ESC, 0x45, 0]);
+        add("Jatisari Senori Tuban" + NL); add("Wa: 0852-3480-3820" + NL + NL);
+        add([ESC, 0x61, 0]);
+        add(`Tanggal  : ${transaksi.tanggal}` + NL); add(`Pelanggan: ${transaksi.namaPembeli}` + NL); add(garisPutus + NL);
+        for (const item of transaksi.detail) { add(formatItem(item)); }
+        add(garisPutus + NL);
 
-          add([ESC, 0x61, 2]);
-          add(`Total   : Rp ${transaksi.total}` + NL); add(`Bayar   : Rp ${transaksi.uang}` + NL); add(`Kembali : Rp ${transaksi.kembali}` + NL + NL);
+        add([ESC, 0x61, 2]);
+        add(`Total   : Rp ${transaksi.total}` + NL); add(`Bayar   : Rp ${transaksi.uang}` + NL); add(`Kembali : Rp ${transaksi.kembali}` + NL + NL);
 
-          add([ESC, 0x61, 1]); add("Terima kasih telah berbelanja!" + NL + NL + NL);
-          add([GS, 0x56, 66, 0]);
+        add([ESC, 0x61, 1]); 
+        add("Terima kasih telah berbelanja!" + NL + NL);
 
-          return new Uint8Array(commands);
-      }
+        // ==========================================
+        // === TAMBAHKAN PERINTAH QR CODE ESC/POS ===
+        // ==========================================
+        const qrData = "https://wpashop.com";
+        const qrDataLen = qrData.length + 3;
+        const pL = qrDataLen % 256;
+        const pH = Math.floor(qrDataLen / 256);
+
+        // Ratakan tengah untuk QR
+        add([ESC, 0x61, 1]); 
+        
+        // Perintah ESC/POS untuk QR Code (Mendukung hampir semua printer thermal via RawBT)
+        // Set model QR
+        add([GS, (0x28), 0x6b, 0x04, 0x00, 0x31, 0x41, 0x30, 0x00]);
+        // Set ukuran modul (pixel size = 4)
+        add([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, 0x04]);
+        // Set level koreksi error (Level M)
+        add([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x30]);
+        // Simpan data ke simbol QR
+        add([GS, 0x28, 0x6b, pL, pH, 0x31, 0x50, 0x30]);
+        add(qrData);
+        // Cetak QR Code yang sudah disimpan
+        add([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30]);
+        
+        add(NL + "Kunjungi wpashop.com" + NL + NL);
+        // ==========================================
+
+        add([GS, 0x56, 66, 0]); // Potong kertas
+
+        return new Uint8Array(commands);
+    }
     </script>
     <script>
       if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Error: ', err)); }); }
