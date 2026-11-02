@@ -11,7 +11,7 @@
     <!-- Firebase SDK (Modular v10) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -27,7 +27,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        window.firebaseApp = { db, auth, signInWithEmailAndPassword, onAuthStateChanged, signOut, collection, getDocs, query, where, limit };
+        window.firebaseApp = { db, auth, signInWithEmailAndPassword, onAuthStateChanged, signOut, collection, getDocs, query, limit };
     </script>
 </head>
 <body class="bg-slate-100 font-sans antialiased" x-data="posApp()">
@@ -84,7 +84,7 @@
                     type="text" 
                     x-model="searchQuery" 
                     @input.debounce.500ms="searchProducts()"
-                    placeholder="Scan barcode atau ketik nama produk..." 
+                    placeholder="Scan barcode atau ketik nama produk (misal: KITA, SOTO, dll)..." 
                     class="w-full pl-10 pr-36 py-3 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 font-medium"
                 >
                 <div class="absolute right-3 top-3 text-xs text-slate-400 flex items-center">
@@ -99,22 +99,24 @@
                         <div>
                             <div class="flex justify-between items-start mb-1">
                                 <div>
-                                    <h3 class="font-bold text-slate-800 text-base capitalize" x-text="product.nama"></h3>
+                                    <h3 class="font-bold text-slate-800 text-base uppercase" x-text="product.nama"></h3>
                                     <p class="text-xs text-slate-400" x-show="product.isi" x-text="'Isi: ' + product.isi"></p>
                                 </div>
                                 <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded" x-text="'BC: ' + (product.barcode || '-')"></span>
                             </div>
                             
+                            <!-- Daftar Satuan (Karton, Slop, Pak, Sak, Bal, Pcs) secara Dinamis -->
                             <div class="mt-3 space-y-2">
-                                <!-- Harga Karton (Membaca field: karton) -->
-                                <template x-if="product.karton && product.karton > 0">
-                                    <div class="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
-                                        <div>
-                                            <p class="text-xs font-semibold text-slate-700">Karton / Dus</p>
-                                            <p class="text-xs text-indigo-600 font-bold" x-text="formatRupiah(product.karton)"></p>
+                                <template x-for="unit in availableUnits">
+                                    <template x-if="product[unit.key] && product[unit.key] > 0">
+                                        <div class="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
+                                            <div>
+                                                <p class="text-xs font-semibold text-slate-700" x-text="unit.label"></p>
+                                                <p class="text-xs text-indigo-600 font-bold" x-text="formatRupiah(product[unit.key])"></p>
+                                            </div>
+                                            <button @click="addToCart(product, `${product.nama} (${unit.label})`, product[unit.key], unit.label)" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-indigo-700">+ Pilih</button>
                                         </div>
-                                        <button @click="addToCart(product, `${product.nama} (Karton)`, product.karton, 'Karton')" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-indigo-700">+ Pilih</button>
-                                    </div>
+                                    </template>
                                 </template>
 
                                 <!-- Harga Variasi (misal: Ecer) -->
@@ -147,7 +149,7 @@
                     <template x-for="(item, index) in cart" :key="index">
                         <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
                             <div>
-                                <h4 class="text-xs font-semibold text-slate-800 capitalize" x-text="item.displayName"></h4>
+                                <h4 class="text-xs font-semibold text-slate-800 uppercase" x-text="item.displayName"></h4>
                                 <p class="text-xs text-slate-500" x-text="formatRupiah(item.price) + ' x ' + item.qty"></p>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -182,6 +184,16 @@
                 products: [],
                 cart: [],
                 isLoading: false,
+                
+                // Daftar satuan yang didukung
+                availableUnits: [
+                    { key: 'karton', label: 'Karton' },
+                    { key: 'slop', label: 'Slop' },
+                    { key: 'pak', label: 'Pak' },
+                    { key: 'sak', label: 'Sak' },
+                    { key: 'bal', label: 'Bal' },
+                    { key: 'pcs', label: 'Pcs' }
+                ],
 
                 init() {
                     setTimeout(() => {
@@ -213,8 +225,8 @@
                 },
 
                 async searchProducts() {
-                    const rawInput = this.searchQuery.trim();
-                    if (!rawInput) {
+                    const keyword = this.searchQuery.trim().toLowerCase();
+                    if (!keyword) {
                         this.products = [];
                         this.isLoading = false;
                         return;
@@ -223,54 +235,39 @@
                     this.isLoading = true;
 
                     try {
-                        const { db, collection, getDocs, query, where, limit } = window.firebaseApp;
+                        const { db, collection, getDocs, query, limit } = window.firebaseApp;
                         const productsRef = collection(db, "produk");
-                        let tempProducts = [];
-                        let matchedIds = new Set();
+                        
+                        // Ambil sampel data produk (misal 100 produk terakhir/teratas) untuk mendukung pencarian kata di tengah (substring)
+                        // Sangat ringan dan responsif untuk kasir
+                        const q = query(productsRef, limit(150));
+                        const querySnapshot = await getDocs(q);
+                        
+                        let matchedProducts = [];
+                        querySnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const nama = (data.nama || "").toLowerCase();
+                            const barcode = (data.barcode || "").toLowerCase();
+                            
+                            // Cek apakah barcode cocok ATAU nama produk mengandung kata yang diketik (baik di depan, tengah, maupun belakang)
+                            const matchBarcode = barcode === keyword;
+                            const matchName = nama.includes(keyword);
+                            
+                            // Cek juga dalam variasi jika ada
+                            let matchVariasi = false;
+                            if (data.variasi && Array.isArray(data.variasi)) {
+                                matchVariasi = data.variasi.some(v => 
+                                    (v.nama || "").toLowerCase().includes(keyword) || 
+                                    (v.barcode || "").toLowerCase() === keyword
+                                );
+                            }
 
-                        // 1. Cari Barcode (Barcode Utama)
-                        const qBarcode = query(productsRef, where("barcode", "==", rawInput), limit(5));
-                        const snapBarcode = await getDocs(qBarcode);
-                        snapBarcode.forEach((doc) => {
-                            if (!matchedIds.has(doc.id)) {
-                                matchedIds.add(doc.id);
-                                tempProducts.push({ id: doc.id, ...doc.data() });
+                            if (matchBarcode || matchName || matchVariasi) {
+                                matchedProducts.push({ id: doc.id, ...data });
                             }
                         });
 
-                        // 2. Pencarian Nama: Coba Format Asli / Lowercase
-                        const lowerInput = rawInput.toLowerCase();
-                        const qNameLower = query(
-                            productsRef,
-                            where("nama", ">=", lowerInput),
-                            where("nama", "<=", lowerInput + "\uf8ff"),
-                            limit(10)
-                        );
-                        const snapNameLower = await getDocs(qNameLower);
-                        snapNameLower.forEach((doc) => {
-                            if (!matchedIds.has(doc.id)) {
-                                matchedIds.add(doc.id);
-                                tempProducts.push({ id: doc.id, ...doc.data() });
-                            }
-                        });
-
-                        // 3. Pencarian Nama: Coba Format Uppercase
-                        const upperInput = rawInput.toUpperCase();
-                        const qNameUpper = query(
-                            productsRef,
-                            where("nama", ">=", upperInput),
-                            where("nama", "<=", upperInput + "\uf8ff"),
-                            limit(10)
-                        );
-                        const snapNameUpper = await getDocs(qNameUpper);
-                        snapNameUpper.forEach((doc) => {
-                            if (!matchedIds.has(doc.id)) {
-                                matchedIds.add(doc.id);
-                                tempProducts.push({ id: doc.id, ...doc.data() });
-                            }
-                        });
-
-                        this.products = tempProducts;
+                        this.products = matchedProducts.slice(0, 15); // Batasi hasil tampil maksimal 15 produk
                     } catch (error) {
                         console.error("Gagal mengambil data dari Firebase:", error);
                     } finally {
@@ -307,6 +304,7 @@
                 },
 
                 calculateTotal() {
+                    this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
                     return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
                 },
 
