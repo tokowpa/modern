@@ -11,9 +11,10 @@
     <!-- Firebase SDK (Modular v10) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
         apiKey: "AIzaSyDsz5Y-7PsulS71Z_TiPWbBW3qiMkYFI1g",
         authDomain: "wpashopgrosir-45a9d.firebaseapp.com",
@@ -27,7 +28,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        window.firebaseApp = { db, auth, signInWithEmailAndPassword, onAuthStateChanged, signOut, collection, getDocs, query, limit };
+        window.firebaseApp = { db, auth, signInWithEmailAndPassword, onAuthStateChanged, signOut, collection, getDocs };
     </script>
 </head>
 <body class="bg-slate-100 font-sans antialiased" x-data="posApp()">
@@ -55,6 +56,7 @@
 
     <!-- HALAMAN UTAMA KASIR -->
     <div x-show="isLoggedIn" class="flex h-screen overflow-hidden" style="display: none;">
+        
         <!-- Bagian Kiri: Katalog & Pencarian Produk -->
         <div class="flex-1 flex flex-col p-4 overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -62,7 +64,10 @@
                     <h1 class="text-2xl font-bold text-slate-800">Kasir / Penjualan</h1>
                     <p class="text-xs text-slate-500">AGEN WPA SHOP GROSIR</p>
                 </div>
-                <button @click="logout()" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100">Keluar Akun</button>
+                <div class="flex items-center space-x-3">
+                    <span x-show="isFetchingData" class="text-xs text-indigo-600 font-medium animate-pulse">Memuat data produk...</span>
+                    <button @click="logout()" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100">Keluar Akun</button>
+                </div>
             </div>
 
             <!-- Kotak Pencarian dengan Debounce & Loading State -->
@@ -83,12 +88,12 @@
                 <input 
                     type="text" 
                     x-model="searchQuery" 
-                    @input.debounce.500ms="searchProducts()"
+                    @input.debounce.300ms="searchProducts()"
                     placeholder="Scan barcode atau ketik nama produk (misal: KITA, SOTO, dll)..." 
                     class="w-full pl-10 pr-36 py-3 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 font-medium"
                 >
                 <div class="absolute right-3 top-3 text-xs text-slate-400 flex items-center">
-                    <span x-show="isLoading" class="text-indigo-600 font-medium">Mencari produk...</span>
+                    <span x-show="isLoading" class="text-indigo-600 font-medium">Mencari...</span>
                 </div>
             </div>
 
@@ -105,7 +110,7 @@
                                 <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded" x-text="'BC: ' + (product.barcode || '-')"></span>
                             </div>
                             
-                            <!-- Daftar Satuan (Karton, Slop, Pak, Sak, Bal, Pcs) secara Dinamis -->
+                            <!-- Pilihan Satuan Dinamis (Karton, Slop, Pak, Sak, Bal, Pcs) -->
                             <div class="mt-3 space-y-2">
                                 <template x-for="unit in availableUnits">
                                     <template x-if="product[unit.key] && product[unit.key] > 0">
@@ -135,9 +140,9 @@
                 </template>
             </div>
 
-            <!-- Pesan Kosong -->
+            <!-- Pesan Kosong / Awal -->
             <div x-show="products.length === 0 && !isLoading" class="text-center py-12 text-slate-400">
-                <p>Silakan scan barcode atau ketik nama produk pada kolom di atas.</p>
+                <p>Silakan ketik nama produk atau scan barcode pada kolom di atas.</p>
             </div>
         </div>
 
@@ -173,6 +178,7 @@
         </div>
     </div>
 
+    <!-- Skrip Aplikasi -->
     <script>
         function posApp() {
             return {
@@ -182,10 +188,12 @@
                 loginError: '',
                 searchQuery: '',
                 products: [],
+                allProducts: [],
                 cart: [],
                 isLoading: false,
+                isFetchingData: false,
                 
-                // Daftar satuan yang didukung
+                // Satuan lengkap gudang grosir
                 availableUnits: [
                     { key: 'karton', label: 'Karton' },
                     { key: 'slop', label: 'Slop' },
@@ -198,10 +206,35 @@
                 init() {
                     setTimeout(() => {
                         const { auth, onAuthStateChanged } = window.firebaseApp;
-                        onAuthStateChanged(auth, (user) => {
-                            this.isLoggedIn = !!user;
+                        onAuthStateChanged(auth, async (user) => {
+                            if (user) {
+                                this.isLoggedIn = true;
+                                await this.loadAllProducts();
+                            } else {
+                                this.isLoggedIn = false;
+                                this.allProducts = [];
+                            }
                         });
                     }, 500);
+                },
+
+                // Tarik seluruh data produk sekali saat login agar pencarian instan dan akurat
+                async loadAllProducts() {
+                    if (this.allProducts.length > 0) return;
+                    this.isFetchingData = true;
+                    try {
+                        const { db, collection, getDocs } = window.firebaseApp;
+                        const querySnapshot = await getDocs(collection(db, "produk"));
+                        let temp = [];
+                        querySnapshot.forEach((doc) => {
+                            temp.push({ id: doc.id, ...doc.data() });
+                        });
+                        this.allProducts = temp;
+                    } catch (error) {
+                        console.error("Gagal memuat database produk:", error);
+                    } finally {
+                        this.isFetchingData = false;
+                    }
                 },
 
                 async login() {
@@ -210,6 +243,7 @@
                         const { auth, signInWithEmailAndPassword } = window.firebaseApp;
                         await signInWithEmailAndPassword(auth, this.email, this.password);
                         this.isLoggedIn = true;
+                        await this.loadAllProducts();
                     } catch (error) {
                         this.loginError = "Gagal login: " + error.message;
                     }
@@ -221,10 +255,12 @@
                     this.isLoggedIn = false;
                     this.cart = [];
                     this.products = [];
+                    this.allProducts = [];
                     this.searchQuery = '';
                 },
 
-                async searchProducts() {
+                // Pencarian dari memori lokal (mendukung kata di tengah seperti "KITA")
+                searchProducts() {
                     const keyword = this.searchQuery.trim().toLowerCase();
                     if (!keyword) {
                         this.products = [];
@@ -234,45 +270,31 @@
 
                     this.isLoading = true;
 
-                    try {
-                        const { db, collection, getDocs, query, limit } = window.firebaseApp;
-                        const productsRef = collection(db, "produk");
+                    let matchedProducts = [];
+                    for (let product of this.allProducts) {
+                        const nama = (product.nama || "").toLowerCase();
+                        const barcode = (product.barcode || "").toLowerCase();
                         
-                        // Ambil sampel data produk (misal 100 produk terakhir/teratas) untuk mendukung pencarian kata di tengah (substring)
-                        // Sangat ringan dan responsif untuk kasir
-                        const q = query(productsRef, limit(150));
-                        const querySnapshot = await getDocs(q);
+                        const matchBarcode = barcode === keyword;
+                        const matchName = nama.includes(keyword); // Pencarian kata di tengah / substring
                         
-                        let matchedProducts = [];
-                        querySnapshot.forEach((doc) => {
-                            const data = doc.data();
-                            const nama = (data.nama || "").toLowerCase();
-                            const barcode = (data.barcode || "").toLowerCase();
-                            
-                            // Cek apakah barcode cocok ATAU nama produk mengandung kata yang diketik (baik di depan, tengah, maupun belakang)
-                            const matchBarcode = barcode === keyword;
-                            const matchName = nama.includes(keyword);
-                            
-                            // Cek juga dalam variasi jika ada
-                            let matchVariasi = false;
-                            if (data.variasi && Array.isArray(data.variasi)) {
-                                matchVariasi = data.variasi.some(v => 
-                                    (v.nama || "").toLowerCase().includes(keyword) || 
-                                    (v.barcode || "").toLowerCase() === keyword
-                                );
-                            }
+                        let matchVariasi = false;
+                        if (product.variasi && Array.isArray(product.variasi)) {
+                            matchVariasi = product.variasi.some(v => 
+                                (v.nama || "").toLowerCase().includes(keyword) || 
+                                (v.barcode || "").toLowerCase() === keyword
+                            );
+                        }
 
-                            if (matchBarcode || matchName || matchVariasi) {
-                                matchedProducts.push({ id: doc.id, ...data });
-                            }
-                        });
-
-                        this.products = matchedProducts.slice(0, 15); // Batasi hasil tampil maksimal 15 produk
-                    } catch (error) {
-                        console.error("Gagal mengambil data dari Firebase:", error);
-                    } finally {
-                        this.isLoading = false;
+                        if (matchBarcode || matchName || matchVariasi) {
+                            matchedProducts.push(product);
+                        }
+                        
+                        if (matchedProducts.length >= 15) break; // Batasi maksimal 15 hasil tampil
                     }
+
+                    this.products = matchedProducts;
+                    this.isLoading = false;
                 },
 
                 addToCart(product, displayName, price, type) {
@@ -304,7 +326,6 @@
                 },
 
                 calculateTotal() {
-                    this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
                     return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
                 },
 
