@@ -85,7 +85,7 @@
                     type="text" 
                     x-model="searchQuery" 
                     @input.debounce.500ms="searchProducts()"
-                    placeholder="Scan barcode atau ketik nama produk (pencarian otomatis setelah selesai mengetik)..." 
+                    placeholder="Scan barcode atau ketik nama produk (huruf kecil/besar otomatis disesuaikan)..." 
                     class="w-full pl-10 pr-36 py-3 bg-white border border-slate-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 font-medium"
                 >
                 <div class="absolute right-3 top-3 text-xs text-slate-400 flex items-center">
@@ -103,15 +103,17 @@
                                 <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded" x-text="'BC: ' + product.barcode"></span>
                             </div>
                             
-                            <!-- Pilihan Harga Grosir / Slop / Dus -->
+                            <!-- Pilihan Harga Karton / Slop (Hanya tampil jika field slop ada dan > 0) -->
                             <div class="mt-3 space-y-2">
-                                <div class="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
-                                    <div>
-                                        <p class="text-xs font-semibold text-slate-700">Slop / Dus Utama</p>
-                                        <p class="text-xs text-indigo-600 font-bold" x-text="formatRupiah(product.slop || product.hargaBeli)"></p>
+                                <template x-if="product.slop && product.slop > 0">
+                                    <div class="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
+                                        <div>
+                                            <p class="text-xs font-semibold text-slate-700">Karton / Slop</p>
+                                            <p class="text-xs text-indigo-600 font-bold" x-text="formatRupiah(product.slop)"></p>
+                                        </div>
+                                        <button @click="addToCart(product, product.nama, product.slop, 'Karton/Slop')" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-indigo-700">+ Pilih</button>
                                     </div>
-                                    <button @click="addToCart(product, product.nama, product.slop || product.hargaBeli, 'Dus/Slop')" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-indigo-700">+ Pilih</button>
-                                </div>
+                                </template>
 
                                 <!-- Pilihan Harga Variasi (misal: Ecer) -->
                                 <template x-for="v in (product.variasi || [])">
@@ -209,23 +211,26 @@
                 },
 
                 async searchProducts() {
-                    const keyword = this.searchQuery.trim();
-                    if (!keyword) {
+                    const rawInput = this.searchQuery.trim();
+                    if (!rawInput) {
                         this.products = [];
                         this.isLoading = false;
                         return;
                     }
 
+                    // Otomatis ubah input pencarian menjadi HURUF KAPITAL agar cocok dengan data Firebase
+                    const keyword = rawInput.toUpperCase();
+
                     this.isLoading = true;
 
                     try {
                         const { db, collection, getDocs, query, where, limit } = window.firebaseApp;
-                        const productsRef = collection(db, "produk"); // Menggunakan nama koleksi "produk"
+                        const productsRef = collection(db, "produk");
                         let tempProducts = [];
                         let matchedIds = new Set();
 
-                        // 1. Cari berdasarkan Barcode Utama (Top-level)
-                        const qBarcode = query(productsRef, where("barcode", "==", keyword), limit(5));
+                        // 1. Cari berdasarkan Barcode Utama
+                        const qBarcode = query(productsRef, where("barcode", "==", rawInput), limit(5));
                         const snapBarcode = await getDocs(qBarcode);
                         snapBarcode.forEach((doc) => {
                             if (!matchedIds.has(doc.id)) {
@@ -234,7 +239,7 @@
                             }
                         });
 
-                        // 2. Cari berdasarkan Nama Produk (Prefix search, misal: "SUKUN")
+                        // 2. Cari berdasarkan Nama Produk (dengan keyword yang sudah dikapitalisasi)
                         const qName = query(
                             productsRef,
                             where("nama", ">=", keyword),
